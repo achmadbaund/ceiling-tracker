@@ -111,10 +111,10 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  // Default center: CGK field centroid — runways + calibration cross sit at zenith.
+  // Default center: CGK field centroid.
   centerLat: -6.1256,
   centerLon: 106.656,
-  radiusMiles: 8,
+  radiusMiles: 15,
 
   rotationDeg: 0,
   mirrorX: true,

@@ -1,5 +1,5 @@
 // Bundled airport geometry, drawn at true geographic position so departures and
-// arrivals visibly line up with the runways. Coordinates from OurAirports (KSFO).
+// arrivals visibly line up with the runways. Coordinates from OurAirports.
 
 export interface Runway {
   leIdent: string;
@@ -15,6 +15,36 @@ export interface Airport {
   runways: Runway[];
 }
 
+/** Soekarno-Hatta (CGK) — default center is Tangerang approach. */
+export const CGK: Airport = {
+  icao: "WIII",
+  name: "CGK",
+  runways: [
+    {
+      leIdent: "06",
+      heIdent: "24",
+      le: [-6.113886, 106.644592],
+      he: [-6.103842, 106.669769],
+      widthFt: 197,
+    },
+    {
+      leIdent: "07L",
+      heIdent: "25R",
+      le: [-6.12106, 106.639],
+      he: [-6.10899, 106.668999],
+      widthFt: 197,
+    },
+    {
+      leIdent: "07R",
+      heIdent: "25L",
+      le: [-6.1426, 106.643997],
+      he: [-6.13032, 106.674004],
+      widthFt: 197,
+    },
+  ],
+};
+
+/** Reference build (San Francisco). */
 export const SFO: Airport = {
   icao: "KSFO",
   name: "SFO",
@@ -26,5 +56,5 @@ export const SFO: Airport = {
   ],
 };
 
-/** Airports drawn on the map (currently just SFO; easy to extend). */
-export const AIRPORTS: Airport[] = [SFO];
+/** Airports drawn on the map (CGK for Indonesia setup). */
+export const AIRPORTS: Airport[] = [CGK];

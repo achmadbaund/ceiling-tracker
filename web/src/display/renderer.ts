@@ -435,29 +435,32 @@ export class Renderer {
   private drawAirport(cfg: Config, proj: ProjOpts): void {
     const ctx = this.ctx;
     const rwyRgb: [number, number, number] = [150, 180, 220];
+    const gridRgb = hexToRgb(cfg.palette.grid);
     for (const ap of AIRPORTS) {
+      const pts: [number, number][] = [];
       let cx = 0;
       let cy = 0;
       let n = 0;
       for (const r of ap.runways) {
+        pts.push(r.le, r.he);
         const a = this.toScreen(r.le, cfg, proj);
         const b = this.toScreen(r.he, cfg, proj);
-        // True runway width in px, nudged up a touch so it stays legible.
-        const wpx = Math.max(2.5, r.widthFt * 0.3048 * proj.pxPerM * 1.4);
+        // Floor width so runways stay legible on ceiling projection.
+        const wpx = Math.max(6, r.widthFt * 0.3048 * proj.pxPerM * 3);
 
         ctx.save();
         ctx.lineCap = "butt";
         // Asphalt body.
-        ctx.strokeStyle = rgba(rwyRgb, 0.16 * cfg.brightness);
+        ctx.strokeStyle = rgba(rwyRgb, 0.34 * cfg.brightness);
         ctx.lineWidth = wpx;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
         // Dashed centerline.
-        ctx.strokeStyle = rgba([210, 226, 255], 0.22 * cfg.brightness);
-        ctx.lineWidth = 1;
-        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = rgba([210, 226, 255], 0.48 * cfg.brightness);
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 8]);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);
@@ -468,13 +471,60 @@ export class Renderer {
         cy += (a.y + b.y) / 2;
         n++;
       }
+
+      // CGK runways are parallel (unlike SFO's perpendicular pairs). Draw a
+      // geographic N–S / E–W cross through the airfield so the map still has
+      // the calibration "+" at the airport.
+      if (pts.length) {
+        const clat = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+        const clon = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+        let maxE = 0;
+        let maxN = 0;
+        for (const p of pts) {
+          const m = llToMeters(p[0], p[1], clat, clon);
+          maxE = Math.max(maxE, Math.abs(m.east));
+          maxN = Math.max(maxN, Math.abs(m.north));
+        }
+        const pad = 1.12;
+        const cm = llToMeters(clat, clon, cfg.centerLat, cfg.centerLon);
+        const north = project({ east: cm.east, north: cm.north + maxN * pad }, proj);
+        const south = project({ east: cm.east, north: cm.north - maxN * pad }, proj);
+        const east = project({ east: cm.east + maxE * pad, north: cm.north }, proj);
+        const west = project({ east: cm.east - maxE * pad, north: cm.north }, proj);
+
+        ctx.save();
+        ctx.strokeStyle = rgba(gridRgb, 0.58 * cfg.brightness);
+        ctx.lineWidth = 1.25;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(north.x, north.y);
+        ctx.lineTo(south.x, south.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(west.x, west.y);
+        ctx.lineTo(east.x, east.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        const mid = project(cm, proj);
+        const arm = 9;
+        ctx.strokeStyle = rgba(gridRgb, 0.82 * cfg.brightness);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(mid.x - arm, mid.y);
+        ctx.lineTo(mid.x + arm, mid.y);
+        ctx.moveTo(mid.x, mid.y - arm);
+        ctx.lineTo(mid.x, mid.y + arm);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // Airport label at the runway centroid.
       if (n) {
         cx /= n;
         cy /= n;
         ctx.save();
         ctx.font = `300 13px ${cfg.fonts.label}`;
-        ctx.fillStyle = rgba(rwyRgb, 0.5 * cfg.brightness);
+        ctx.fillStyle = rgba(rwyRgb, 0.65 * cfg.brightness);
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         try {

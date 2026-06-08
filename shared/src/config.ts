@@ -111,11 +111,12 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  // Default center: San Francisco International (SFO). Set this to your own
-  // location — ideally where you'll be looking up at the ceiling.
-  centerLat: 37.6213,
-  centerLon: -122.379,
-  radiusMiles: 3,
+  // Default center: Tangerang barat (approach CGK dari Selat Sunda), ~8 km
+  // barat-daya bandara — bukan di landasan, tapi masih dalam jangkauan feeder
+  // ADS-B CGK. API airplanes.live di sini ~10–15 pesawat; Bekasi jauh lebih sepi.
+  centerLat: -6.178,
+  centerLon: 106.631,
+  radiusMiles: 15,
 
   rotationDeg: 0,
   mirrorX: true,

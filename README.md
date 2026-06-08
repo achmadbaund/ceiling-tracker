@@ -1,7 +1,15 @@
-<h1 align="center">Skylight</h1>
+<h1 align="center">Ceiling Tracker</h1>
 
 <p align="center">
-  <em>Project the aircraft passing overhead onto your ceiling, in real time — an X-ray through the roof.</em>
+  <em>Proyeksikan pesawat yang melintas di atas Anda ke langit-langit, real-time — seperti rontgen atap rumah.</em>
+  <br>
+  <sub>Fork dari <a href="https://github.com/cpaczek/skylight">Skylight</a> · preset Jakarta (approach CGK)</sub>
+</p>
+
+<p align="center">
+  <strong>Apa ini?</strong> Aplikasi web yang menampilkan posisi pesawat, jalur, dan langit (matahari, bulan, bintang, ISS)
+  di atas lokasi Anda — dirancang untuk diproyeksikan ke langit-langit via proyektor.
+  Tanpa RTL-SDR pun bisa dicoba lewat API ADS-B publik.
 </p>
 
 <p align="center">
@@ -31,8 +39,10 @@ It also draws the **real sky** behind the planes — sun, moon, bright stars and
 constellations, and live **satellites including the ISS** — all at their true positions
 for your location and time. Tune everything from your phone.
 
-> Reference build is centered on **San Francisco International (SFO)**, but it works
-> anywhere — set your coordinates (and swap the runway data) and you're flying.
+> Fork ini default ke **Tangerang barat (approach CGK)** — kawasan perumahan ~8 km
+> barat-daya bandara, bukan di landasan, tapi masih dalam jangkauan feeder ADS-B.
+> Radius default **15 mi** agar lebih banyak pesawat terlihat lewat API.
+> Ubah `centerLat` / `centerLon` di control panel atau [`shared/src/config.ts`](shared/src/config.ts).
 
 ## Features
 
@@ -95,8 +105,9 @@ DATA_SOURCE=api pnpm dev
 - **Display:** http://localhost:5173/
 - **Control panel:** http://localhost:5173/control.html (or from your phone: `http://<your-ip>:5173/control.html`)
 
-Set your location in the control panel area is coming; for now set `centerLat` /
-`centerLon` in [`shared/src/config.ts`](shared/src/config.ts) (defaults to SFO).
+Default lokasi: **Tangerang** (`-6.178`, `106.631`). Sesuaikan di control panel atau
+[`shared/src/config.ts`](shared/src/config.ts). Setelah ganti default, reset config lama:
+`curl -X POST http://localhost:3000/api/config/reset`
 
 ### With a radio (locally)
 
@@ -125,7 +136,7 @@ fields:
 | | |
 |---|---|
 | `centerLat` / `centerLon` | **Your location** — where you're looking up. |
-| `radiusMiles` | How far out to show (default 3 — "what you could realistically see"). |
+| `radiusMiles` | How far out to show (default **15 mi** di fork ini; naikkan di control panel sampai 20 mi). |
 | `rotationDeg` / `mirrorX` | Calibration for the looking-up flip (tune against a real pass). |
 | `theme` | `ambient` · `telemetry` · `focus`. |
 | `showStars` / `showSun` / `showMoon` / `showSatellites` | Sky layer toggles. |

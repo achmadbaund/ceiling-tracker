@@ -375,12 +375,12 @@ export class Renderer {
       ctx.restore();
     }
 
-    // N–S / E–W cross through zenith (calibration grid from the demo).
-    if (cfg.compass || cfg.rangeRings) {
+    // N–S / E–W cross through zenith — bright enough for green laser projection.
+    if (cfg.compass || cfg.rangeRings || cfg.showAirport) {
+      const crossRgb: [number, number, number] = [205, 225, 255];
       ctx.save();
-      ctx.strokeStyle = rgba(gridRgb, 0.62 * cfg.brightness);
-      ctx.lineWidth = 1;
-      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = rgba(crossRgb, 0.78 * cfg.brightness);
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(cx, cy - fieldR);
       ctx.lineTo(cx, cy + fieldR);
@@ -389,11 +389,9 @@ export class Renderer {
       ctx.moveTo(cx - fieldR, cy);
       ctx.lineTo(cx + fieldR, cy);
       ctx.stroke();
-      ctx.setLineDash([]);
-      // Center +
-      const arm = 7;
-      ctx.strokeStyle = rgba(gridRgb, 0.85 * cfg.brightness);
-      ctx.lineWidth = 1.25;
+      const arm = 14;
+      ctx.strokeStyle = rgba(crossRgb, 0.95 * cfg.brightness);
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(cx - arm, cy);
       ctx.lineTo(cx + arm, cy);
@@ -435,14 +433,11 @@ export class Renderer {
   private drawAirport(cfg: Config, proj: ProjOpts): void {
     const ctx = this.ctx;
     const rwyRgb: [number, number, number] = [150, 180, 220];
-    const gridRgb = hexToRgb(cfg.palette.grid);
     for (const ap of AIRPORTS) {
-      const pts: [number, number][] = [];
       let cx = 0;
       let cy = 0;
       let n = 0;
       for (const r of ap.runways) {
-        pts.push(r.le, r.he);
         const a = this.toScreen(r.le, cfg, proj);
         const b = this.toScreen(r.he, cfg, proj);
         // Floor width so runways stay legible on ceiling projection.
@@ -472,51 +467,8 @@ export class Renderer {
         n++;
       }
 
-      // CGK runways are parallel (unlike SFO's perpendicular pairs). Draw a
-      // geographic N–S / E–W cross through the airfield so the map still has
-      // the calibration "+" at the airport.
-      if (pts.length) {
-        const clat = pts.reduce((s, p) => s + p[0], 0) / pts.length;
-        const clon = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-        let maxE = 0;
-        let maxN = 0;
-        for (const p of pts) {
-          const m = llToMeters(p[0], p[1], clat, clon);
-          maxE = Math.max(maxE, Math.abs(m.east));
-          maxN = Math.max(maxN, Math.abs(m.north));
-        }
-        const pad = 1.12;
-        const cm = llToMeters(clat, clon, cfg.centerLat, cfg.centerLon);
-        const north = project({ east: cm.east, north: cm.north + maxN * pad }, proj);
-        const south = project({ east: cm.east, north: cm.north - maxN * pad }, proj);
-        const east = project({ east: cm.east + maxE * pad, north: cm.north }, proj);
-        const west = project({ east: cm.east - maxE * pad, north: cm.north }, proj);
-
-        ctx.save();
-        ctx.strokeStyle = rgba(gridRgb, 0.58 * cfg.brightness);
-        ctx.lineWidth = 1.25;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.moveTo(north.x, north.y);
-        ctx.lineTo(south.x, south.y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(west.x, west.y);
-        ctx.lineTo(east.x, east.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        const mid = project(cm, proj);
-        const arm = 9;
-        ctx.strokeStyle = rgba(gridRgb, 0.82 * cfg.brightness);
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(mid.x - arm, mid.y);
-        ctx.lineTo(mid.x + arm, mid.y);
-        ctx.moveTo(mid.x, mid.y - arm);
-        ctx.lineTo(mid.x, mid.y + arm);
-        ctx.stroke();
-        ctx.restore();
-      }
+      // CGK runways are parallel (unlike SFO's perpendicular pairs). The visible
+      // "+" comes from the full-screen cross in drawOverlays when centered on CGK.
 
       // Airport label at the runway centroid.
       if (n) {

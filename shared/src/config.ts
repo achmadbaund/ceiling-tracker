@@ -111,12 +111,10 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  // Default center: Tangerang barat (approach CGK dari Selat Sunda), ~8 km
-  // barat-daya bandara — bukan di landasan, tapi masih dalam jangkauan feeder
-  // ADS-B CGK. API airplanes.live di sini ~10–15 pesawat; Bekasi jauh lebih sepi.
-  centerLat: -6.178,
-  centerLon: 106.631,
-  radiusMiles: 15,
+  // Default center: CGK field centroid — runways + calibration cross sit at zenith.
+  centerLat: -6.1256,
+  centerLon: 106.656,
+  radiusMiles: 8,
 
   rotationDeg: 0,
   mirrorX: true,

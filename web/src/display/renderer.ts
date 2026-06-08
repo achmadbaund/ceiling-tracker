@@ -351,35 +351,60 @@ export class Renderer {
     return 0;
   }
 
-  // --- overlays: whisper-quiet rings + compass ---
+  // --- overlays: rings, center crosshair, compass ---
   private drawOverlays(cfg: Config, proj: ProjOpts): void {
     const ctx = this.ctx;
     const cx = this.w / 2;
     const cy = this.h / 2;
+    const fieldR = (Math.min(this.w, this.h) / 2) * 0.965;
+    const gridRgb = hexToRgb(cfg.palette.grid);
 
     if (cfg.rangeRings) {
       ctx.save();
-      for (let mi = 1; mi <= Math.floor(cfg.radiusMiles); mi++) {
+      const step = cfg.radiusMiles > 12 ? 5 : 1;
+      for (let mi = step; mi <= Math.floor(cfg.radiusMiles); mi += step) {
         const r = mi * 1609.34 * proj.pxPerM;
         ctx.beginPath();
         ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = rgba(hexToRgb(cfg.palette.grid), 0.5 * cfg.brightness);
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = rgba(gridRgb, (mi === step ? 0.72 : 0.55) * cfg.brightness);
+        ctx.lineWidth = mi === step ? 1.25 : 1;
         ctx.setLineDash([2, 7]);
         ctx.stroke();
       }
       ctx.setLineDash([]);
-      // Center mark.
+      ctx.restore();
+    }
+
+    // N–S / E–W cross through zenith (calibration grid from the demo).
+    if (cfg.compass || cfg.rangeRings) {
+      ctx.save();
+      ctx.strokeStyle = rgba(gridRgb, 0.62 * cfg.brightness);
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
       ctx.beginPath();
-      ctx.arc(cx, cy, 2, 0, Math.PI * 2);
-      ctx.fillStyle = rgba(hexToRgb(cfg.palette.grid), 0.7 * cfg.brightness);
-      ctx.fill();
+      ctx.moveTo(cx, cy - fieldR);
+      ctx.lineTo(cx, cy + fieldR);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(cx - fieldR, cy);
+      ctx.lineTo(cx + fieldR, cy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // Center +
+      const arm = 7;
+      ctx.strokeStyle = rgba(gridRgb, 0.85 * cfg.brightness);
+      ctx.lineWidth = 1.25;
+      ctx.beginPath();
+      ctx.moveTo(cx - arm, cy);
+      ctx.lineTo(cx + arm, cy);
+      ctx.moveTo(cx, cy - arm);
+      ctx.lineTo(cx, cy + arm);
+      ctx.stroke();
       ctx.restore();
     }
 
     if (cfg.compass) {
       ctx.save();
-      const R = (Math.min(this.w, this.h) / 2) * 0.965;
       ctx.font = `300 12px ${cfg.fonts.label}`;
       ctx.fillStyle = rgba(hexToRgb(cfg.palette.text), 0.32 * cfg.brightness);
       ctx.textAlign = "center";
@@ -394,7 +419,7 @@ export class Renderer {
           east: Math.sin((deg * Math.PI) / 180) * 1e6,
           north: Math.cos((deg * Math.PI) / 180) * 1e6,
         };
-        const p = project(dir, { ...proj, pxPerM: R / 1e6 });
+        const p = project(dir, { ...proj, pxPerM: fieldR / 1e6 });
         this.withLabelRotation(cfg, p.x, p.y, () => ctx.fillText(label, p.x, p.y));
       }
       try {

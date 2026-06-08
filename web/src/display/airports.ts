@@ -8,9 +8,6 @@ export interface Runway {
   he: [number, number];
   widthFt: number;
   lengthFt: number;
-  /** Magnetic heading at the low-numbered end. */
-  leHeadingDeg: number;
-  heHeadingDeg: number;
 }
 
 export interface Airport {
@@ -40,8 +37,6 @@ export const CGK: Airport = {
       he: [-6.103842, 106.669769],
       widthFt: 197,
       lengthFt: 9843,
-      leHeadingDeg: 68,
-      heHeadingDeg: 248,
     },
     {
       leIdent: "07L",
@@ -50,8 +45,6 @@ export const CGK: Airport = {
       he: [-6.10899, 106.668999],
       widthFt: 197,
       lengthFt: 11812,
-      leHeadingDeg: 68,
-      heHeadingDeg: 248,
     },
     {
       leIdent: "07R",
@@ -60,8 +53,6 @@ export const CGK: Airport = {
       he: [-6.13032, 106.674004],
       widthFt: 197,
       lengthFt: 12008,
-      leHeadingDeg: 68,
-      heHeadingDeg: 248,
     },
   ],
 };
@@ -82,8 +73,6 @@ export const SFO: Airport = {
       he: [37.613538, -122.35716],
       widthFt: 200,
       lengthFt: 11870,
-      leHeadingDeg: 118,
-      heHeadingDeg: 298,
     },
     {
       leIdent: "10R",
@@ -92,8 +81,6 @@ export const SFO: Airport = {
       he: [37.61172, -122.358367],
       widthFt: 200,
       lengthFt: 11381,
-      leHeadingDeg: 118,
-      heHeadingDeg: 298,
     },
     {
       leIdent: "1L",
@@ -102,8 +89,6 @@ export const SFO: Airport = {
       he: [37.626476, -122.37063],
       widthFt: 200,
       lengthFt: 7650,
-      leHeadingDeg: 28,
-      heHeadingDeg: 208,
     },
     {
       leIdent: "1R",
@@ -112,8 +97,6 @@ export const SFO: Airport = {
       he: [37.627346, -122.367124],
       widthFt: 200,
       lengthFt: 8650,
-      leHeadingDeg: 28,
-      heHeadingDeg: 208,
     },
   ],
 };

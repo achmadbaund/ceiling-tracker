@@ -1,15 +1,15 @@
 <h1 align="center">Ceiling Tracker</h1>
 
 <p align="center">
-  <em>Proyeksikan pesawat yang melintas di atas Anda ke langit-langit, real-time — seperti rontgen atap rumah.</em>
+  <em>Project the aircraft passing overhead onto your ceiling, in real time — an X-ray through the roof.</em>
   <br>
-  <sub>Fork dari <a href="https://github.com/cpaczek/skylight">Skylight</a> · preset Jakarta (approach CGK)</sub>
+  <sub>Fork of <a href="https://github.com/cpaczek/skylight">Skylight</a> · Jakarta preset (CGK approach corridor)</sub>
 </p>
 
 <p align="center">
-  <strong>Apa ini?</strong> Aplikasi web yang menampilkan posisi pesawat, jalur, dan langit (matahari, bulan, bintang, ISS)
-  di atas lokasi Anda — dirancang untuk diproyeksikan ke langit-langit via proyektor.
-  Tanpa RTL-SDR pun bisa dicoba lewat API ADS-B publik.
+  <strong>What is this?</strong> A web app that shows live aircraft, flight trails, and the real sky
+  (sun, moon, stars, ISS) above your location — built for ceiling projection.
+  Try it without an RTL-SDR using a public ADS-B API.
 </p>
 
 <p align="center">
@@ -39,10 +39,10 @@ It also draws the **real sky** behind the planes — sun, moon, bright stars and
 constellations, and live **satellites including the ISS** — all at their true positions
 for your location and time. Tune everything from your phone.
 
-> Fork ini default ke **Tangerang barat (approach CGK)** — kawasan perumahan ~8 km
-> barat-daya bandara, bukan di landasan, tapi masih dalam jangkauan feeder ADS-B.
-> Radius default **15 mi** agar lebih banyak pesawat terlihat lewat API.
-> Ubah `centerLat` / `centerLon` di control panel atau [`shared/src/config.ts`](shared/src/config.ts).
+> This fork defaults to **west Tangerang (CGK approach corridor)** — a residential area
+> ~8 km southwest of the airport, not on the runway, but still within CGK ADS-B feeder
+> coverage. Default radius is **15 mi** for better aircraft visibility via API.
+> Change `centerLat` / `centerLon` in the control panel or [`shared/src/config.ts`](shared/src/config.ts).
 
 ## Features
 
@@ -105,8 +105,8 @@ DATA_SOURCE=api pnpm dev
 - **Display:** http://localhost:5173/
 - **Control panel:** http://localhost:5173/control.html (or from your phone: `http://<your-ip>:5173/control.html`)
 
-Default lokasi: **Tangerang** (`-6.178`, `106.631`). Sesuaikan di control panel atau
-[`shared/src/config.ts`](shared/src/config.ts). Setelah ganti default, reset config lama:
+Default location: **Tangerang** (`-6.178`, `106.631`). Adjust in the control panel or
+[`shared/src/config.ts`](shared/src/config.ts). After changing defaults, reset stale config:
 `curl -X POST http://localhost:3000/api/config/reset`
 
 ### With a radio (locally)
@@ -136,7 +136,7 @@ fields:
 | | |
 |---|---|
 | `centerLat` / `centerLon` | **Your location** — where you're looking up. |
-| `radiusMiles` | How far out to show (default **15 mi** di fork ini; naikkan di control panel sampai 20 mi). |
+| `radiusMiles` | How far out to show (default **15 mi** in this fork; up to 20 mi in the control panel). |
 | `rotationDeg` / `mirrorX` | Calibration for the looking-up flip (tune against a real pass). |
 | `theme` | `ambient` · `telemetry` · `focus`. |
 | `showStars` / `showSun` / `showMoon` / `showSatellites` | Sky layer toggles. |

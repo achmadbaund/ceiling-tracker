@@ -351,7 +351,7 @@ export class Renderer {
     return 0;
   }
 
-  // --- overlays: rings, center crosshair, compass ---
+  // --- overlays: range rings + compass ---
   private drawOverlays(cfg: Config, proj: ProjOpts): void {
     const ctx = this.ctx;
     const cx = this.w / 2;
@@ -372,32 +372,6 @@ export class Renderer {
         ctx.stroke();
       }
       ctx.setLineDash([]);
-      ctx.restore();
-    }
-
-    // N–S / E–W cross through zenith — bright enough for green laser projection.
-    if (cfg.compass || cfg.rangeRings || cfg.showAirport) {
-      const crossRgb: [number, number, number] = [205, 225, 255];
-      ctx.save();
-      ctx.strokeStyle = rgba(crossRgb, 0.78 * cfg.brightness);
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy - fieldR);
-      ctx.lineTo(cx, cy + fieldR);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(cx - fieldR, cy);
-      ctx.lineTo(cx + fieldR, cy);
-      ctx.stroke();
-      const arm = 14;
-      ctx.strokeStyle = rgba(crossRgb, 0.95 * cfg.brightness);
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.moveTo(cx - arm, cy);
-      ctx.lineTo(cx + arm, cy);
-      ctx.moveTo(cx, cy - arm);
-      ctx.lineTo(cx, cy + arm);
-      ctx.stroke();
       ctx.restore();
     }
 

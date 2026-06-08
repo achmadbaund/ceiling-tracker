@@ -23,7 +23,7 @@ import {
   type Meters,
   type Point,
 } from "@shared/index.js";
-import { AIRPORTS } from "./airports.js";
+import { AIRPORTS, formatRunwayLength, type Airport, type Runway } from "./airports.js";
 import { classifyGlyph, drawAircraftGlyph, GLYPH_SCALE } from "./aircraftGlyph.js";
 import { computeSky, type Sky, type Tle } from "./celestial.js";
 import { ASTERISMS } from "./stars.js";
@@ -406,67 +406,213 @@ export class Renderer {
   // --- airport: runways at true geographic position ---
   private drawAirport(cfg: Config, proj: ProjOpts): void {
     const ctx = this.ctx;
+    const b = cfg.brightness;
     const rwyRgb: [number, number, number] = [150, 180, 220];
+    const labelRgb: [number, number, number] = [210, 226, 255];
+    const textRgb = hexToRgb(cfg.palette.text);
+
     for (const ap of AIRPORTS) {
       let cx = 0;
       let cy = 0;
       let n = 0;
       for (const r of ap.runways) {
         const a = this.toScreen(r.le, cfg, proj);
-        const b = this.toScreen(r.he, cfg, proj);
-        // Floor width so runways stay legible on ceiling projection.
+        const bPt = this.toScreen(r.he, cfg, proj);
         const wpx = Math.max(6, r.widthFt * 0.3048 * proj.pxPerM * 3);
 
         ctx.save();
         ctx.lineCap = "butt";
-        // Asphalt body.
-        ctx.strokeStyle = rgba(rwyRgb, 0.34 * cfg.brightness);
+        ctx.strokeStyle = rgba(rwyRgb, 0.34 * b);
         ctx.lineWidth = wpx;
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.lineTo(bPt.x, bPt.y);
         ctx.stroke();
-        // Dashed centerline.
-        ctx.strokeStyle = rgba([210, 226, 255], 0.48 * cfg.brightness);
+        ctx.strokeStyle = rgba(labelRgb, 0.48 * b);
         ctx.lineWidth = 2;
         ctx.setLineDash([8, 8]);
         ctx.beginPath();
         ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
+        ctx.lineTo(bPt.x, bPt.y);
         ctx.stroke();
+        ctx.setLineDash([]);
         ctx.restore();
 
-        cx += (a.x + b.x) / 2;
-        cy += (a.y + b.y) / 2;
+        this.drawRunwayThreshold(ctx, a, bPt, wpx, labelRgb, b);
+        this.drawRunwayLabels(cfg, r, a, bPt, labelRgb, textRgb, b);
+
+        cx += (a.x + bPt.x) / 2;
+        cy += (a.y + bPt.y) / 2;
         n++;
       }
 
-      // CGK runways are parallel (unlike SFO's perpendicular pairs). The visible
-      // "+" comes from the full-screen cross in drawOverlays when centered on CGK.
-
-      // Airport label at the runway centroid.
       if (n) {
-        cx /= n;
-        cy /= n;
-        ctx.save();
-        ctx.font = `300 13px ${cfg.fonts.label}`;
-        ctx.fillStyle = rgba(rwyRgb, 0.65 * cfg.brightness);
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        try {
-          ctx.letterSpacing = "4px";
-        } catch {
-          /* noop */
-        }
-        ctx.fillText(ap.name, cx, cy);
-        try {
-          ctx.letterSpacing = "0px";
-        } catch {
-          /* noop */
-        }
-        ctx.restore();
+        this.drawAirportInfo(cfg, ap, cx / n, cy / n, rwyRgb, textRgb, b);
       }
     }
+  }
+
+  /** Perpendicular threshold bars at each runway end. */
+  private drawRunwayThreshold(
+    ctx: CanvasRenderingContext2D,
+    a: Point,
+    b: Point,
+    wpx: number,
+    rgb: [number, number, number],
+    alpha: number,
+  ): void {
+    const tick = Math.max(wpx * 1.35, 10);
+    for (const end of [a, b]) {
+      const other = end === a ? b : a;
+      const dx = end.x - other.x;
+      const dy = end.y - other.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const px = (-dy / len) * tick * 0.5;
+      const py = (dx / len) * tick * 0.5;
+      ctx.save();
+      ctx.strokeStyle = rgba(rgb, 0.72 * alpha);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(end.x - px, end.y - py);
+      ctx.lineTo(end.x + px, end.y + py);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  private drawRunwayLabels(
+    cfg: Config,
+    r: Runway,
+    a: Point,
+    b: Point,
+    accentRgb: [number, number, number],
+    textRgb: [number, number, number],
+    alpha: number,
+  ): void {
+    const ends: { p: Point; ident: string; hdg: number }[] = [
+      { p: a, ident: r.leIdent, hdg: r.leHeadingDeg },
+      { p: b, ident: r.heIdent, hdg: r.heHeadingDeg },
+    ];
+    for (const end of ends) {
+      const other = end.p === a ? b : a;
+      const dx = end.p.x - other.x;
+      const dy = end.p.y - other.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ox = (dx / len) * 11;
+      const oy = (dy / len) * 11;
+      const lx = end.p.x + ox;
+      const ly = end.p.y + oy;
+      this.airportLabel(cfg, lx, ly, end.ident, accentRgb, 0.82 * alpha, 11, "center");
+      this.airportLabel(
+        cfg,
+        lx,
+        ly + 12,
+        `${String(end.hdg).padStart(3, "0")}°`,
+        textRgb,
+        0.42 * alpha,
+        9,
+        "center",
+      );
+    }
+
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+    const midText = `${r.leIdent}/${r.heIdent} · ${formatRunwayLength(r.lengthFt)}`;
+    this.airportLabelRotated(cfg, mx, my, midText, accentRgb, 0.58 * alpha, 10, angle);
+  }
+
+  private drawAirportInfo(
+    cfg: Config,
+    ap: Airport,
+    x: number,
+    y: number,
+    accentRgb: [number, number, number],
+    textRgb: [number, number, number],
+    alpha: number,
+  ): void {
+    const longest = ap.runways.reduce((m, r) => Math.max(m, r.lengthFt), 0);
+    const lines: { text: string; size: number; rgb: [number, number, number]; a: number }[] = [
+      { text: ap.fullName.toUpperCase(), size: 15, rgb: accentRgb, a: 0.9 },
+      { text: `${ap.icao} · ${ap.iata} · ${ap.city}`, size: 11, rgb: textRgb, a: 0.62 },
+      {
+        text: `Elev ${ap.elevationFt} ft · ${ap.runways.length} RWY · max ${formatRunwayLength(longest)}`,
+        size: 10,
+        rgb: textRgb,
+        a: 0.5,
+      },
+    ];
+    let oy = y - 34;
+    for (const ln of lines) {
+      this.airportLabel(cfg, x, oy, ln.text, ln.rgb, ln.a * alpha, ln.size, "center");
+      oy += ln.size + 5;
+    }
+  }
+
+  private airportLabel(
+    cfg: Config,
+    x: number,
+    y: number,
+    text: string,
+    rgb: [number, number, number],
+    alpha: number,
+    sizePx: number,
+    align: CanvasTextAlign,
+  ): void {
+    const ctx = this.ctx;
+    this.withLabelRotation(cfg, x, y, () => {
+      ctx.save();
+      ctx.font = `300 ${sizePx}px ${cfg.fonts.label}`;
+      ctx.fillStyle = rgba(rgb, alpha);
+      ctx.textAlign = align;
+      ctx.textBaseline = "middle";
+      try {
+        ctx.letterSpacing = sizePx >= 13 ? "2px" : "1px";
+      } catch {
+        /* noop */
+      }
+      ctx.fillText(text, x, y);
+      try {
+        ctx.letterSpacing = "0px";
+      } catch {
+        /* noop */
+      }
+      ctx.restore();
+    });
+  }
+
+  private airportLabelRotated(
+    cfg: Config,
+    x: number,
+    y: number,
+    text: string,
+    rgb: [number, number, number],
+    alpha: number,
+    sizePx: number,
+    angleDeg: number,
+  ): void {
+    const ctx = this.ctx;
+    this.withLabelRotation(cfg, x, y, () => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((angleDeg * Math.PI) / 180);
+      ctx.font = `300 ${sizePx}px ${cfg.fonts.mono}`;
+      ctx.fillStyle = rgba(rgb, alpha);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      try {
+        ctx.letterSpacing = "0.5px";
+      } catch {
+        /* noop */
+      }
+      ctx.fillText(text, 0, 0);
+      try {
+        ctx.letterSpacing = "0px";
+      } catch {
+        /* noop */
+      }
+      ctx.restore();
+    });
   }
 
   private toScreen(ll: [number, number], cfg: Config, proj: ProjOpts): Point {

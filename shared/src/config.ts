@@ -111,9 +111,11 @@ export interface Config {
 }
 
 export const DEFAULT_CONFIG: Config = {
-  // Default center: CGK field centroid.
-  centerLat: -6.1256,
-  centerLon: 106.656,
+  // Default center: Tangerang barat (approach CGK dari Selat Sunda), ~8 km
+  // barat-daya bandara — bukan di landasan, tapi masih dalam jangkauan feeder
+  // ADS-B CGK.
+  centerLat: -6.178,
+  centerLon: 106.631,
   radiusMiles: 15,
 
   rotationDeg: 0,
